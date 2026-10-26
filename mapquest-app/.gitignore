@@ -1,0 +1,7 @@
+# Never commit secrets: the real API key lives here locally only.
+config.ini
+.env
+
+# Python artifacts
+__pycache__/
+*.pyc
