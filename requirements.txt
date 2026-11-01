@@ -1,2 +1,4 @@
 requests>=2.31
 rich>=13
+flask>=3.0
+pytest>=8

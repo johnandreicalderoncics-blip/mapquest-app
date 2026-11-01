@@ -19,40 +19,20 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+# Formatting lives in backend/formatting.py so every frontend shares it;
+# these names are re-exported here for CLI compatibility (main.py and
+# tests import them from display).
+from backend.formatting import (GALLONS_PER_MILE, LITERS_PER_KM,
+                                METERS_PER_MILE, PROFILE_LABELS, UNIT_LABELS,
+                                format_distance, format_fuel_estimate,
+                                format_time)
+
+__all__ = ["console", "GALLONS_PER_MILE", "LITERS_PER_KM",
+           "METERS_PER_MILE", "PROFILE_LABELS", "UNIT_LABELS",
+           "format_distance", "format_fuel_estimate", "format_time",
+           "show_banner", "show_error", "show_result", "show_route"]
+
 console = Console()
-
-METERS_PER_MILE = 1609.344
-LITERS_PER_KM = 0.08        # typical car: 8 L / 100 km
-GALLONS_PER_MILE = 1 / 29.4  # typical car: 29 mpg
-
-UNIT_LABELS = {
-    "metric": {"distance": "Kilometers", "fuel": "Liters (est.)",
-               "short": "km", "fuel_short": "L"},
-    "imperial": {"distance": "Miles", "fuel": "Gallons (est.)",
-                 "short": "mi", "fuel_short": "gal"},
-}
-
-PROFILE_LABELS = {
-    "car": "Car (driving)",
-    "bike": "Bicycle",
-    "walk": "Walking",
-}
-
-
-def format_time(milliseconds: float) -> str:
-    """Convert GraphHopper's milliseconds to hh:mm:ss."""
-    seconds = int(milliseconds / 1000)
-    hours, remainder = divmod(seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-
-
-def format_distance(meters: float, units: str) -> str:
-    """Convert meters to the user's chosen unit."""
-    labels = UNIT_LABELS[units]
-    if units == "metric":
-        return f"{meters / 1000:.2f} {labels['short']}"
-    return f"{meters / METERS_PER_MILE:.2f} {labels['short']}"
 
 
 def show_banner() -> None:
@@ -82,15 +62,7 @@ def show_route(result: dict, units: str, profile: str) -> None:
 
     # --- Trip summary -------------------------------------------------
     meters = path.get("distance", 0)
-    if profile == "car":
-        if units == "metric":
-            fuel_text = f"{(meters / 1000) * LITERS_PER_KM:.2f} " \
-                        f"{labels['fuel_short']}"
-        else:
-            fuel_text = f"{(meters / METERS_PER_MILE) * GALLONS_PER_MILE:.2f} " \
-                        f"{labels['fuel_short']}"
-    else:
-        fuel_text = "N/A (not applicable for this travel mode)"
+    fuel_text = format_fuel_estimate(meters, units, profile)
 
     summary = Table(show_header=False, box=box.ROUNDED, border_style="green",
                     title="[bold green]Trip Summary[/]", padding=(0, 2))

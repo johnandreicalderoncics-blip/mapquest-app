@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Directions Finder</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <h1>Directions Finder</h1>
+      <p class="subtitle">Driving, cycling and walking routes via GraphHopper</p>
+    </header>
+
+    {% if not has_key %}
+    <section class="notice" aria-labelledby="setup-title">
+      <h2 id="setup-title">No GraphHopper API key found</h2>
+      <ul class="setup-lines">
+        {% for line in setup_lines %}
+        {% if line %}<li>{{ line }}</li>{% endif %}
+        {% endfor %}
+      </ul>
+      <p>You can add a key and resubmit this page - no restart needed.</p>
+    </section>
+    {% endif %}
+
+    {% if error %}
+    <section class="alert" role="alert">
+      <h2>{{ error }}</h2>
+      {% if error_detail %}<p>{{ error_detail }}</p>{% endif %}
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <form method="post" action="/route" id="route-form">
+        <div class="field">
+          <label for="origin">From</label>
+          <input type="text" id="origin" name="origin" value="{{ origin }}"
+                 placeholder="e.g. Manila, PH" autocomplete="off" required>
+        </div>
+        <div class="field">
+          <label for="destination">To</label>
+          <input type="text" id="destination" name="destination"
+                 value="{{ destination }}" placeholder="e.g. Quezon City, PH"
+                 autocomplete="off" required>
+        </div>
+
+        <fieldset class="choices">
+          <legend>Units</legend>
+          <label class="radio">
+            <input type="radio" name="units" value="metric"
+                   {{ 'checked' if units == 'metric' }}> Metric (km, liters)
+          </label>
+          <label class="radio">
+            <input type="radio" name="units" value="imperial"
+                   {{ 'checked' if units == 'imperial' }}> Imperial (mi, gallons)
+          </label>
+        </fieldset>
+
+        <fieldset class="choices">
+          <legend>Travel mode</legend>
+          <label class="radio">
+            <input type="radio" name="profile" value="car"
+                   {{ 'checked' if profile == 'car' }}> Car
+          </label>
+          <label class="radio">
+            <input type="radio" name="profile" value="bike"
+                   {{ 'checked' if profile == 'bike' }}> Bicycle
+          </label>
+          <label class="radio">
+            <input type="radio" name="profile" value="walk"
+                   {{ 'checked' if profile == 'walk' }}> Walking
+          </label>
+        </fieldset>
+
+        <button type="submit" id="find-button">Find route</button>
+      </form>
+    </section>
+
+    {% if result %}
+    <section class="card result" aria-labelledby="result-title">
+      <h2 id="result-title">Trip Summary</h2>
+      <dl class="summary">
+        <dt>From</dt><dd>{{ result.from_name }}</dd>
+        <dt>To</dt><dd>{{ result.to_name }}</dd>
+        <dt>Travel mode</dt><dd>{{ result.profile_label }}</dd>
+        <dt>Trip duration</dt><dd>{{ result.duration }}</dd>
+        <dt>Distance</dt><dd>{{ result.distance }}</dd>
+        <dt>Fuel used</dt><dd>{{ result.fuel }}</dd>
+      </dl>
+
+      <h3>Turn-by-Turn Directions</h3>
+      {% if result.steps %}
+      <ol class="steps">
+        {% for step in result.steps %}
+        <li>{{ step.text }} <span class="step-distance">{{ step.distance }}</span></li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <p class="muted">No turn-by-turn instructions were returned for this route.</p>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <footer class="page-footer">
+      <p>The CLI is still available with <code>py main.py</code>; the desktop
+         GUI with <code>py gui.py</code>.</p>
+    </footer>
+  </main>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

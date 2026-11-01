@@ -22,8 +22,7 @@ Run with:  py main.py
 
 import sys
 
-import api
-import config
+from backend import api, config
 import display
 
 # Accepted answers for the startup prompts.
