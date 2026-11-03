@@ -7,7 +7,7 @@ key state themselves.
 
 import pytest
 
-from app import create_app
+from src.frontend.web.app import create_app
 
 
 @pytest.fixture()

@@ -8,7 +8,7 @@ import unittest
 
 from tests.helpers import make_failure_result, make_success_result
 
-import gui
+from src.frontend.desktop import gui
 
 
 class ValidateInputsTests(unittest.TestCase):

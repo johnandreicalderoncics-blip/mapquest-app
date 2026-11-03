@@ -1,9 +1,10 @@
 """Tests for backend/formatting.py and display.py's re-exports."""
 
+import logging
 import unittest
 
 from backend import formatting
-import display
+from src.frontend.cli import display
 
 
 class FormatTimeTests(unittest.TestCase):
@@ -16,6 +17,19 @@ class FormatTimeTests(unittest.TestCase):
     def test_hours(self) -> None:
         self.assertEqual(formatting.format_time(3_600_000 * 2 + 61_000),
                          "02:01:01")
+    
+    def test_none_value(self) -> None:
+        """None values should return 'N/A'."""
+        self.assertEqual(formatting.format_time(None), "N/A")
+    
+    def test_negative_value(self) -> None:
+        """Negative values should return 'N/A'."""
+        self.assertEqual(formatting.format_time(-1000), "N/A")
+    
+    def test_non_numeric_value(self) -> None:
+        """Non-numeric values should return 'N/A'."""
+        self.assertEqual(formatting.format_time("invalid"), "N/A")
+        self.assertEqual(formatting.format_time([1, 2, 3]), "N/A")
 
 
 class FormatDistanceTests(unittest.TestCase):
@@ -26,6 +40,24 @@ class FormatDistanceTests(unittest.TestCase):
     def test_imperial(self) -> None:
         self.assertEqual(formatting.format_distance(15830, "imperial"),
                          "9.84 mi")
+    
+    def test_none_meters(self) -> None:
+        """None meters should return 'N/A'."""
+        self.assertEqual(formatting.format_distance(None, "metric"), "N/A")
+    
+    def test_negative_meters(self) -> None:
+        """Negative meters should return 'N/A'."""
+        self.assertEqual(formatting.format_distance(-100, "metric"), "N/A")
+    
+    def test_non_numeric_meters(self) -> None:
+        """Non-numeric meters should return 'N/A'."""
+        self.assertEqual(formatting.format_distance("invalid", "metric"), "N/A")
+        self.assertEqual(formatting.format_distance([1, 2], "metric"), "N/A")
+    
+    def test_invalid_units(self) -> None:
+        """Invalid units should default to metric."""
+        result = formatting.format_distance(15830, "invalid_unit")
+        self.assertEqual(result, "15.83 km")  # Defaults to metric
 
 
 class FormatFuelEstimateTests(unittest.TestCase):
@@ -46,6 +78,27 @@ class FormatFuelEstimateTests(unittest.TestCase):
             self.assertEqual(
                 formatting.format_fuel_estimate(25000, "metric", profile),
                 "N/A (not applicable for this travel mode)")
+    
+    def test_none_meters(self) -> None:
+        """None meters should return 'N/A'."""
+        self.assertEqual(formatting.format_fuel_estimate(None, "metric", "car"), "N/A")
+    
+    def test_negative_meters(self) -> None:
+        """Negative meters should return 'N/A'."""
+        self.assertEqual(formatting.format_fuel_estimate(-100, "metric", "car"), "N/A")
+    
+    def test_non_numeric_meters(self) -> None:
+        """Non-numeric meters should return 'N/A'."""
+        self.assertEqual(formatting.format_fuel_estimate("invalid", "metric", "car"), "N/A")
+    
+    def test_invalid_units(self) -> None:
+        """Invalid units should default to metric."""
+        result = formatting.format_fuel_estimate(25000, "invalid_unit", "car")
+        self.assertEqual(result, "2.00 L")  # Defaults to metric
+    
+    def test_invalid_profile(self) -> None:
+        """Invalid profile should return 'N/A'."""
+        self.assertEqual(formatting.format_fuel_estimate(25000, "metric", "invalid_profile"), "N/A")
 
 
 class DisplayReExportTests(unittest.TestCase):

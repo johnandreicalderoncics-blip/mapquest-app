@@ -85,11 +85,11 @@ class TestRoutePost:
                 "origin": "A", "destination": "B",
                 "units": "metric", "profile": "bike"}
             ).get_data(as_text=True)
-        # The metric/bike radios come back checked (the checked
-        # attribute may render on the tag's following line).
-        assert re.search(r'name="units" value="metric"\s+checked', body)
-        assert re.search(r'name="profile" value="bike"\s+checked', body)
-        assert not re.search(r'name="units" value="imperial"\s+checked',
+        # The metric/bike radios come back checked (attributes render
+        # one per line since the Task 2.1 markup restructure).
+        assert re.search(r'name="units"\s+value="metric"\s+checked', body)
+        assert re.search(r'name="profile"\s+value="bike"\s+checked', body)
+        assert not re.search(r'name="units"\s+value="imperial"\s+checked',
                              body)
 
     def test_graphhopper_failure_shows_title_and_detail(self, client,

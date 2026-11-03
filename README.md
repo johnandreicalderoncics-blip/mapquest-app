@@ -82,8 +82,10 @@ committed to GitHub. Never paste a real key into any other file.
 
 ## Usage
 
+### CLI (Command-Line Interface)
+
 ```
-py main.py
+py run_cli.py
 ```
 
 Sample session:
@@ -118,13 +120,13 @@ location to exit; press `Ctrl+C` anywhere to leave politely.
 Good sample inputs: `Manila, PH` -> `Quezon City, PH`,
 `Cebu City, PH` -> `Mandaue City, PH`.
 
-## GUI
+### GUI (Desktop Application)
 
 The same directions are also available in a desktop window built with
 Python's built-in `tkinter` - no extra install:
 
 ```
-py gui.py
+py run_gui.py
 ```
 
 Enter a starting location and destination, pick metric/imperial units
@@ -150,12 +152,12 @@ py -c "import tkinter; print(tkinter.TkVersion)"
 If that fails, reinstall Python from python.org with the *tcl/tk and
 IDLE* option enabled.
 
-## Browser app
+### Browser app (Web Interface)
 
-The same directions are also served as a local web page by Flask:
+The same directions are served as a local web page by Flask:
 
 ```
-py app.py
+py run_web.py
 ```
 
 This starts a development server bound to `127.0.0.1:5000` (localhost
@@ -171,7 +173,10 @@ a traceback.
 
 The page works with JavaScript disabled (the form is a plain POST);
 `static/app.js` only disables the button and shows "Searching..." while
-the server responds.
+the server responds. When a route is returned, the page also displays an
+interactive Leaflet map with the GraphHopper route, start marker, and
+destination marker. The map tiles come from OpenStreetMap and require an
+internet connection.
 
 The browser app reuses the same API key setup as the CLI and GUI: the
 `GRAPHOPPER_KEY` environment variable or `config.ini` (see
@@ -182,18 +187,40 @@ server. The key never appears in any page or URL.
 
 ## Project structure
 
+The project is organized into clear frontend and backend layers:
+
+### Entry Points (Project Root)
+
 | File | Purpose |
 |---|---|
-| `app.py` | Web entry point: Flask routes (`GET /`, `POST /route`), 404/500 pages, `py app.py` launcher |
-| `main.py` | CLI entry point: startup prompts, input loop, quit handling |
-| `gui.py` | GUI entry point: tkinter window, background requests, rendering |
+| `run_cli.py` | CLI entry point: `py run_cli.py` launches the terminal interface |
+| `run_gui.py` | GUI entry point: `py run_gui.py` launches the desktop window |
+| `run_web.py` | Web entry point: `py run_web.py` launches the browser interface |
+
+### Frontend Layer (`src/frontend/`)
+
+| Directory/File | Purpose |
+|---|---|
+| `src/frontend/cli/main.py` | CLI implementation: startup prompts, input loop, quit handling |
+| `src/frontend/cli/display.py` | CLI output: rich tables/panels over the shared formatters |
+| `src/frontend/desktop/gui.py` | GUI implementation: tkinter window, background requests, rendering |
+| `src/frontend/web/app.py` | Web implementation: Flask routes (`GET /`, `POST /route`), 404/500 pages |
+
+### Backend Layer (`backend/`)
+
+| File | Purpose |
+|---|---|
 | `backend/config.py` | Loads the API key (env var `GRAPHOPPER_KEY`, then `config.ini`) |
 | `backend/api.py` | Geocoding + routing calls; converts every failure into a plain result dictionary |
 | `backend/services.py` | Web service layer: input validation, key resolution, route-to-template shaping |
 | `backend/formatting.py` | Presentation-neutral formatting shared by all frontends (units, duration, fuel) |
+
+### Supporting Files
+
+| Directory/File | Purpose |
+|---|---|
 | `templates/index.html` | The single server-rendered page (form, setup banner, errors, results) |
 | `static/style.css`, `static/app.js` | Styling and the submit-button enhancement |
-| `display.py` | CLI output: rich tables/panels over the shared formatters |
 | `config.sample.ini` | Template for the git-ignored `config.ini` |
 | `requirements.txt` | Third-party dependencies |
 | `tests/` | unittest suites (CLI/GUI) + pytest tests (services, Flask routes); mocked network |
@@ -241,18 +268,18 @@ Activity 4 (details in `docs/03-workload-status.md`):
 
 ## Future: packaging as a Windows executable (PyInstaller)
 
-Nothing is packaged yet - the launch command is `py app.py`. If a
+Nothing is packaged yet - the launch command is `py run_web.py`. If a
 no-Python-installed machine ever needs to run the browser app, build a
 single-file executable with [PyInstaller](https://pyinstaller.org/):
 
 ```
 py -m pip install pyinstaller
-py -m PyInstaller --onefile app.py --add-data "templates;templates" --add-data "static;static"
+py -m PyInstaller --onefile run_web.py --add-data "templates;templates" --add-data "static;static" --hidden-import=src.frontend.web.app
 ```
 
 (The `;` separator is Windows-specific; use `:` on macOS/Linux.) The
-`backend` package is collected automatically because `app.py` imports
-it. The generated `dist/app.exe` starts the same localhost server and
+`backend` package is collected automatically because the app imports
+it. The generated `dist/run_web.exe` starts the same localhost server and
 opens the browser; templates and static assets resolve from the bundle.
 Committing generated binaries is out of scope for this sprint.
 
@@ -263,17 +290,17 @@ and another member reviews before merging into `main`.
 
 To add a feature, touch the module that owns that concern:
 
-- New prompt or input rule -> `main.py`
+- New prompt or input rule -> `src/frontend/cli/main.py`
 - New API parameter or endpoint -> `backend/api.py` (keep failures as
   `{"ok": False, ...}` dictionaries so display stays simple)
-- New output/tables/columns -> `display.py` (Rich rendering); shared
+- New output/tables/columns -> `src/frontend/cli/display.py` (Rich rendering); shared
   number/unit formatting -> `backend/formatting.py` (used by CLI, GUI
   and web)
-- New GUI widget or behavior -> `gui.py`
+- New GUI widget or behavior -> `src/frontend/desktop/gui.py`
 - New web validation or route shaping -> `backend/services.py`
-- New HTTP route or page element -> `app.py` + `templates/`
+- New HTTP route or page element -> `src/frontend/web/app.py` + `templates/`
 - New configuration -> `backend/config.py`
 
-Keep the layers separate: `backend/api.py` never prints, `display.py`,
-`gui.py` and `app.py` never call the network, and no frontend imports
+Keep the layers separate: `backend/api.py` never prints, `src/frontend/cli/display.py`,
+`src/frontend/desktop/gui.py` and `src/frontend/web/app.py` never call the network, and no frontend imports
 another. That is what makes the app easy to extend and test.

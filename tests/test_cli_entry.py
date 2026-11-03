@@ -4,7 +4,7 @@ import unittest
 from unittest import mock
 
 from backend import api
-import main
+from src.frontend.cli import main
 
 
 class StubConsole:

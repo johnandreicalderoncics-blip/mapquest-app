@@ -28,6 +28,12 @@ def make_success_result() -> dict:
             "paths": [{
                 "distance": 15830.0,      # meters
                 "time": 1661000.0,        # milliseconds
+                "points": {
+                    "coordinates": [
+                        [121.05, 14.65],
+                        [121.06, 14.66],
+                    ],
+                },
                 "instructions": [
                     {"text": "Turn left onto Main Street",
                      "distance": 350.0},

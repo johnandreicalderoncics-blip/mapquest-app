@@ -40,6 +40,45 @@ class LoadApiKeyTests(unittest.TestCase):
     def test_placeholder_key_returns_none(self) -> None:
         self.assertIsNone(self.run_load("", "YOUR_KEY_HERE"))
 
+    def test_malformed_ini_returns_none(self) -> None:
+        """Test that malformed INI file is handled gracefully."""
+        with tempfile.TemporaryDirectory() as tmp:
+            config_file = Path(tmp) / "config.ini"
+            # Write malformed INI content
+            config_file.write_text("[graphhopper\nkey = test", encoding="utf-8")
+            
+            with mock.patch.dict(config.os.environ, {"GRAPHOPPER_KEY": ""}), \
+                    mock.patch.object(config, "CONFIG_FILE", config_file):
+                # Should return None instead of crashing
+                result = config.load_api_key()
+                self.assertIsNone(result)
+
+    def test_missing_section_returns_none(self) -> None:
+        """Test that missing section is handled gracefully."""
+        with tempfile.TemporaryDirectory() as tmp:
+            config_file = Path(tmp) / "config.ini"
+            # Write INI without graphhopper section
+            config_file.write_text("[other]\nkey = test", encoding="utf-8")
+            
+            with mock.patch.dict(config.os.environ, {"GRAPHOPPER_KEY": ""}), \
+                    mock.patch.object(config, "CONFIG_FILE", config_file):
+                # Should return None using fallback
+                result = config.load_api_key()
+                self.assertIsNone(result)
+
+    def test_empty_config_file_returns_none(self) -> None:
+        """Test that empty config file is handled gracefully."""
+        with tempfile.TemporaryDirectory() as tmp:
+            config_file = Path(tmp) / "config.ini"
+            # Write empty file
+            config_file.write_text("", encoding="utf-8")
+            
+            with mock.patch.dict(config.os.environ, {"GRAPHOPPER_KEY": ""}), \
+                    mock.patch.object(config, "CONFIG_FILE", config_file):
+                # Should return None
+                result = config.load_api_key()
+                self.assertIsNone(result)
+
 
 class GetApiKeyCliContractTests(unittest.TestCase):
     """The CLI path must keep its original setup-message behavior."""

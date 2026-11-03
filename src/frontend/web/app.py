@@ -50,7 +50,12 @@ def _page(**context) -> str:
 
 def create_app() -> Flask:
     """Application factory so tests can build fresh instances."""
-    app = Flask(__name__)
+    # Calculate paths relative to project root (templates/ and static/ at root)
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    template_folder = os.path.join(project_root, "templates")
+    static_folder = os.path.join(project_root, "static")
+    
+    app = Flask(__name__, template_folder=template_folder, static_folder=static_folder)
 
     @app.get("/")
     def index() -> str:

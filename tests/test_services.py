@@ -75,6 +75,12 @@ class TestGetRouteSuccess:
              "distance": "15.48 km"},
         ]
 
+    def test_route_points_are_converted_to_leaflet_latitude_longitude(self):
+        with mock.patch.object(services.api, "fetch_route",
+                               return_value=make_success_result()):
+            result = services.get_route("k", "A", "B", "metric", "car")
+        assert result["route_points"] == [[14.65, 121.05], [14.66, 121.06]]
+
     def test_imperial_distance(self):
         with mock.patch.object(services.api, "fetch_route",
                                return_value=make_success_result()):

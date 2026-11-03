@@ -11,7 +11,7 @@ from unittest import mock
 from backend import api
 from tests.helpers import FakeRoot, make_success_result
 
-import gui
+from src.frontend.desktop import gui
 
 
 class RunRouteRequestTests(unittest.TestCase):
@@ -77,6 +77,51 @@ class StartRouteRequestTests(unittest.TestCase):
         # Simulating the GUI thread invoking the callback delivers it.
         callback(*args)
         self.assertEqual(delivered, [result])
+
+    def test_timeout_delivers_timeout_result(self) -> None:
+        """Verify timeout handling when request exceeds timeout_seconds."""
+        import time
+        root = FakeRoot()
+        delivered: list[dict] = []
+
+        # Mock fetch_route to take longer than the timeout
+        def slow_fetch(*args, **kwargs):
+            time.sleep(2)  # Sleep longer than timeout
+            return make_success_result()
+
+        with mock.patch.object(api, "fetch_route", side_effect=slow_fetch):
+            thread = gui.start_route_request(root, delivered.append,
+                                             "k", "A", "B", "metric",
+                                             "car", timeout_seconds=0.5)
+            # Wait for timeout to trigger
+            time.sleep(1)
+
+        # Should have one after() call with timeout result
+        self.assertGreaterEqual(len(root.after_calls), 1)
+        delay, callback, args = root.after_calls[0]
+        result = args[0]
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["title"], "The request timed out")
+        self.assertIn("did not complete within", result["detail"])
+
+    def test_successful_result_prevents_timeout(self) -> None:
+        """Verify successful result arrives before timeout."""
+        root = FakeRoot()
+        delivered: list[dict] = []
+
+        # Mock fetch_route to complete quickly
+        with mock.patch.object(api, "fetch_route",
+                               return_value=make_success_result()):
+            thread = gui.start_route_request(root, delivered.append,
+                                             "k", "A", "B", "metric",
+                                             "car", timeout_seconds=5)
+            thread.join(timeout=2)
+
+        # Should have exactly one after() call with success result
+        self.assertEqual(len(root.after_calls), 1)
+        delay, callback, args = root.after_calls[0]
+        result = args[0]
+        self.assertTrue(result["ok"])
 
 
 if __name__ == "__main__":
