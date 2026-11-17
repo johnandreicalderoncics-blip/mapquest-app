@@ -265,9 +265,8 @@ def result_to_lines(result: dict, units: str, profile: str) -> list[str]:
     # user's chosen unit.
     for number, step in enumerate(instructions, start=1):
         text = step.get("text") or "(no description)"
-        lines.append(f"{number}. {text} "
-                     f"({formatting.format_distance(step.get('distance', 0),
-                                                    units)})")
+        distance = formatting.format_distance(step.get("distance", 0), units)
+        lines.append(f"{number}. {text} ({distance})")
     return lines
 
 
