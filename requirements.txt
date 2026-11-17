@@ -3,3 +3,4 @@ rich>=13
 flask>=3.0
 pytest>=8
 tkintermapview==1.29
+beautifulsoup4>=4.12

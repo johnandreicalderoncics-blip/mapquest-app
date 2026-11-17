@@ -1,4 +1,5 @@
 # Directions Finder - CLI + GUI + Web (GraphHopper)
+[![CI](https://github.com/johnandreicalderoncics-blip/mapquest-app/actions/workflows/ci.yml/badge.svg)](https://github.com/johnandreicalderoncics-blip/mapquest-app/actions/workflows/ci.yml)
 
 A Python application that gets driving, cycling or walking directions
 from the [GraphHopper Route API](https://docs.graphhopper.com/) and
