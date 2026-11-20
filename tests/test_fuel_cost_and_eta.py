@@ -109,7 +109,7 @@ def test_get_route_cost_is_na_for_walking(monkeypatch):
 def test_web_form_passes_gas_price_to_service(client, monkeypatch):
     seen = {}
 
-    def fake_get_route(key, origin, destination, units, profile, gas_price):
+    def fake_get_route(key, origin, destination, units, profile, gas_price, weight_kg):
         seen["gas_price"] = gas_price
         return {"ok": False, "title": "Stop", "detail": "test"}
 
@@ -125,7 +125,7 @@ def test_web_form_bad_gas_price_uses_default(client, monkeypatch):
     seen = {}
 
     def fake_get_route(*args):
-        seen["gas_price"] = args[-1]
+        seen["gas_price"] = args[5]
         return {"ok": False, "title": "Stop", "detail": "test"}
 
     monkeypatch.setattr(services, "resolve_key", lambda: "k")

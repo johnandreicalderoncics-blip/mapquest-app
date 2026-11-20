@@ -214,6 +214,54 @@ def format_fuel_cost(meters: float, profile: str,
     return f"₱{liters * price:,.2f}"
 
 
+# ---- Calories for walking and biking -----------------------------------
+#
+# Walkers and cyclists don't buy fuel, so the web form asks for body weight
+# instead and the result shows an estimate of kcal burned on the trip.
+DEFAULT_WEIGHT_KG = 60.0
+MIN_WEIGHT_KG = 20.0
+MAX_WEIGHT_KG = 300.0
+
+# MET (metabolic equivalent) values from the Compendium of Physical
+# Activities: brisk walking ~3.5, leisure cycling ~7.5.
+MET_BY_PROFILE = {"walk": 3.5, "bike": 7.5}
+
+
+def parse_weight(raw) -> float:
+    """Turn a form value into a body weight in kg, or the default."""
+    if raw is None:
+        return DEFAULT_WEIGHT_KG
+    try:
+        weight = float(str(raw).strip().lower().replace("kg", "").replace(",", ""))
+    except ValueError:
+        return DEFAULT_WEIGHT_KG
+    if not (MIN_WEIGHT_KG <= weight <= MAX_WEIGHT_KG):
+        return DEFAULT_WEIGHT_KG
+    return weight
+
+
+def format_calories(milliseconds: float, profile: str,
+                    weight_kg: float = DEFAULT_WEIGHT_KG) -> str:
+    """Estimated kcal burned on a walk or bike trip, e.g. "1,234 kcal".
+
+    Returns "N/A" for car routes and for bad input.
+    """
+    met = MET_BY_PROFILE.get(profile)
+    if met is None:
+        return "N/A"
+    try:
+        hours = float(milliseconds) / 3_600_000
+        weight = float(weight_kg)
+    except (TypeError, ValueError):
+        logger.warning("format_calories received non-numeric input")
+        return "N/A"
+    if hours < 0 or weight <= 0:
+        return "N/A"
+    # Standard estimate: kcal = MET x body weight (kg) x hours.
+    kcal = met * weight * hours
+    return f"{round(kcal):,} kcal"
+
+
 def format_eta(milliseconds: float, now=None) -> str:
     """Clock time of arrival if the user leaves now, e.g. "3:45 PM".
 

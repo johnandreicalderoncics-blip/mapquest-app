@@ -291,6 +291,7 @@ FAKE_RESULT = {
     "fuel": "1.2 L",
     "fuel_cost": "₱61.01",
     "gas_price": "62.00",
+    "is_car": True,
     "eta": "3:45 PM",
     "steps": [
         {"number": 1, "text": "Head north on Rizal St", "distance": "1.2 km"},
