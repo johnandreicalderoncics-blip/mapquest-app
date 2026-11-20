@@ -1062,6 +1062,15 @@
       updateControls();
       window.addEventListener("resize", updateControls, { passive: true });
       resultsPanel.addEventListener("transitionend", updateControls);
+      // The panel fades in with a CSS animation (not a transition), so the
+      // first check can run while it is still at opacity 0. Re-check when
+      // the animation ends, whenever the panel resizes, and once as a
+      // backstop; otherwise the map buttons can stay hidden behind it.
+      resultsPanel.addEventListener("animationend", updateControls);
+      if (typeof ResizeObserver === "function") {
+        new ResizeObserver(updateControls).observe(resultsPanel);
+      }
+      window.setTimeout(updateControls, 800);
 
       if (typeof MutationObserver === "function") {
         var observer = new MutationObserver(updateControls);
@@ -1244,6 +1253,45 @@
       console.error("[app]", message, detail || "");
     }
   };
+  // directionsController: the turn-by-turn list lives in a panel over
+  // the map, opened and closed by the list button in the map controls.
+  var directionsController = {
+    initialize: function () {
+      var button = document.getElementById("directionsToggleBtn");
+      var panel = document.getElementById("directionsPanel");
+      var closeBtn = document.getElementById("directionsCloseBtn");
+      if (!button || !panel) {
+        return;
+      }
+      function setOpen(open, returnFocus) {
+        panel.hidden = !open;
+        button.setAttribute("aria-expanded", open ? "true" : "false");
+        button.setAttribute("aria-label",
+          open ? "Hide turn-by-turn directions" : "Show turn-by-turn directions");
+        button.classList.toggle("map-control-btn--active", open);
+        if (open && closeBtn) {
+          closeBtn.focus();
+        } else if (!open && returnFocus) {
+          button.focus();
+        }
+      }
+      button.addEventListener("click", function () {
+        setOpen(panel.hidden, false);
+      });
+      if (closeBtn) {
+        closeBtn.addEventListener("click", function () {
+          setOpen(false, true);
+        });
+      }
+      panel.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          event.stopPropagation();
+          setOpen(false, true);
+        }
+      });
+    }
+  };
+
   // init + DOMContentLoaded
   function init() {
     themeManager.initialize();
@@ -1258,6 +1306,7 @@
     sidebarController.initialize();
     tripSummaryController.initialize();
     mapLayoutController.initialize();
+    directionsController.initialize();
 
     // Server pre-fills values; sync clear buttons on load.
     formController.FIELDS.forEach(function (name) {
