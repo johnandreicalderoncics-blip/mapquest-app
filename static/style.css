@@ -3519,8 +3519,8 @@ contain: layout style paint;
   }
 
   .form-sidebar--idle {
-    transform: translateY(100%);
-    pointer-events: none;
+    /* Keep the header controls reachable while the form rests off-screen. */
+    transform: translateY(calc(100% - 64px));
   }
 
   .metrics-grid {
