@@ -162,3 +162,81 @@ def format_fuel_estimate(meters: float, units: str, profile: str) -> str:
         return f"{(meters / 1000) * LITERS_PER_KM:.2f} {labels['fuel_short']}"
     return (f"{(meters / METERS_PER_MILE) * GALLONS_PER_MILE:.2f} "
             f"{labels['fuel_short']}")
+
+
+# --- Fuel cost (Philippine peso) and ETA ----------------------------------
+#
+# Cost is always worked out from LITERS, whatever display unit the user
+# picked, because PH pump prices are quoted per liter. The default price
+# is only a starting value; the web form lets the user type today's price.
+DEFAULT_GAS_PRICE_PHP = 62.00   # PHP per liter, editable in the web form
+MIN_GAS_PRICE_PHP = 1.0
+MAX_GAS_PRICE_PHP = 500.0
+
+
+def parse_gas_price(raw) -> float:
+    """Turn a form value into a usable PHP/L price, or the default.
+
+    Accepts "65.5", "₱65.50" or "1,065"; anything blank, non-numeric or
+    outside MIN..MAX falls back to DEFAULT_GAS_PRICE_PHP.
+    """
+    if raw is None:
+        return DEFAULT_GAS_PRICE_PHP
+    text = str(raw).strip().replace("₱", "").replace(",", "")
+    try:
+        price = float(text)
+    except ValueError:
+        return DEFAULT_GAS_PRICE_PHP
+    if not (MIN_GAS_PRICE_PHP <= price <= MAX_GAS_PRICE_PHP):
+        return DEFAULT_GAS_PRICE_PHP
+    return price
+
+
+def format_fuel_cost(meters: float, profile: str,
+                     price_per_liter: float = DEFAULT_GAS_PRICE_PHP) -> str:
+    """Estimated fuel cost in pesos for driving routes, e.g. "₱1,234.56".
+
+    Uses the same 8 L/100 km assumption as format_fuel_estimate, so the
+    liters and the peso figure on screen always agree.
+    """
+    if profile != "car":
+        return "N/A"
+    try:
+        meters = float(meters)
+        price = float(price_per_liter)
+    except (TypeError, ValueError):
+        logger.warning("format_fuel_cost received non-numeric input")
+        return "N/A"
+    if meters < 0 or price < 0:
+        logger.warning("format_fuel_cost received a negative value")
+        return "N/A"
+    liters = (meters / 1000) * LITERS_PER_KM
+    return f"₱{liters * price:,.2f}"
+
+
+def format_eta(milliseconds: float, now=None) -> str:
+    """Clock time of arrival if the user leaves now, e.g. "3:45 PM".
+
+    Adds "(+1 day)" / "(+2 days)" when the trip ends on a later date.
+    `now` is injectable so tests don't depend on the real clock.
+    """
+    from datetime import datetime, timedelta
+
+    try:
+        milliseconds = float(milliseconds)
+    except (TypeError, ValueError):
+        logger.warning(f"format_eta received non-numeric value: {milliseconds!r}")
+        return "N/A"
+    if milliseconds < 0:
+        logger.warning(f"format_eta received negative value: {milliseconds}")
+        return "N/A"
+
+    now = now or datetime.now()
+    arrival = now + timedelta(milliseconds=milliseconds)
+    clock = arrival.strftime("%I:%M %p").lstrip("0")
+    days = (arrival.date() - now.date()).days
+    if days == 1:
+        return f"{clock} (+1 day)"
+    if days > 1:
+        return f"{clock} (+{days} days)"
+    return clock

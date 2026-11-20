@@ -289,6 +289,9 @@ FAKE_RESULT = {
     "duration": "30 mins",
     "distance": "12.3 km",
     "fuel": "1.2 L",
+    "fuel_cost": "₱61.01",
+    "gas_price": "62.00",
+    "eta": "3:45 PM",
     "steps": [
         {"number": 1, "text": "Head north on Rizal St", "distance": "1.2 km"},
         {"number": 2, "text": "Turn left onto Main Ave", "distance": "0.8 km"},
@@ -306,14 +309,17 @@ def result_page(client, monkeypatch):
 
 
 def test_rendered_result_metrics_structure(result_page):
-    """Rendered route page contains the metrics grid with 3 color-coded cards."""
+    """Rendered route page contains the metrics grid with 5 color-coded cards."""
     soup = BeautifulSoup(result_page.data.decode("utf-8"), "html.parser")
     grid = soup.find("div", class_="metrics-grid")
     assert grid is not None, "Rendered result must include a metrics grid"
     cards = grid.find_all("div", class_="metric-card")
-    assert len(cards) == 3, "Metrics grid must render 3 metric cards"
+    assert len(cards) == 5, "Metrics grid must render 5 metric cards"
     classes = {c for card in cards for c in card.get("class", [])}
-    assert {"metric-card--distance", "metric-card--duration", "metric-card--fuel"} <= classes
+    assert {"metric-card--distance", "metric-card--duration", "metric-card--fuel",
+            "metric-card--eta", "metric-card--cost"} <= classes
+    text = grid.get_text()
+    assert "3:45 PM" in text and "₱61.01" in text and "₱62.00/L" in text
 
 
 def test_rendered_result_steps_structure(result_page):
