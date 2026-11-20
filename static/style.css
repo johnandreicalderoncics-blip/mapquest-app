@@ -4024,3 +4024,8 @@ h1, h2, h3, .trip-summary-card__title {
     max-height: 36vh;
   }
 }
+
+/* Gas price vs. weight field: only the one for the chosen travel mode shows. */
+.form-field[data-profiles][hidden] {
+  display: none;
+}

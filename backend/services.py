@@ -64,7 +64,8 @@ def resolve_key() -> str | None:
 
 def get_route(key: str, origin: str, destination: str,
               units: str, profile: str,
-              gas_price: float = formatting.DEFAULT_GAS_PRICE_PHP) -> dict:
+              gas_price: float = formatting.DEFAULT_GAS_PRICE_PHP,
+              weight_kg: float = formatting.DEFAULT_WEIGHT_KG) -> dict:
     """Fetch a route and shape it for the index.html template.
 
     Failure dictionaries from api.fetch_route pass through unchanged.
@@ -240,6 +241,9 @@ def get_route(key: str, origin: str, destination: str,
             "fuel": formatting.format_fuel_estimate(meters, units, profile),
             "fuel_cost": formatting.format_fuel_cost(meters, profile, gas_price),
             "gas_price": f"{gas_price:,.2f}",
+            "calories": formatting.format_calories(time_ms, profile, weight_kg),
+            "weight": f"{weight_kg:g}",
+            "is_car": profile == "car",
             "eta": formatting.format_eta(time_ms),
             "steps": steps,
             "route_points": route_points,

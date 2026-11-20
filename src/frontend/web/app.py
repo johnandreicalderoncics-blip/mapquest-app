@@ -41,6 +41,7 @@ def _page(**context) -> str:
     context.setdefault("units", UNIT_DEFAULT)
     context.setdefault("profile", PROFILE_DEFAULT)
     context.setdefault("gas_price", f"{formatting.DEFAULT_GAS_PRICE_PHP:.2f}")
+    context.setdefault("weight", f"{formatting.DEFAULT_WEIGHT_KG:g}")
     context.setdefault("has_key", True)
     context.setdefault("setup_lines", [])
     context.setdefault("error", None)
@@ -75,11 +76,12 @@ def create_app() -> Flask:
         if profile not in services.PROFILE_CHOICES:
             profile = PROFILE_DEFAULT
         gas_price = formatting.parse_gas_price(request.form.get("gas_price"))
+        weight = formatting.parse_weight(request.form.get("weight"))
 
         # Re-fill the form with what the user typed.
         context = {"origin": origin, "destination": destination,
                    "units": units, "profile": profile,
-                   "gas_price": f"{gas_price:.2f}"}
+                   "gas_price": f"{gas_price:.2f}", "weight": f"{weight:g}"}
 
         error = services.validate_inputs(origin, destination)
         if error is not None:
@@ -92,7 +94,7 @@ def create_app() -> Flask:
 
         result = services.get_route(key, origin.strip(),
                                     destination.strip(), units, profile,
-                                    gas_price)
+                                    gas_price, weight)
         if not result.get("ok"):
             return _page(**context, error=result.get("title", "Error"),
                          error_detail=result.get("detail", ""))
