@@ -22,7 +22,7 @@ import webbrowser
 
 from flask import Flask, render_template, request
 
-from backend import config, services
+from backend import config, formatting, services
 
 HOST = "127.0.0.1"
 PORT = 5000
@@ -40,6 +40,7 @@ def _page(**context) -> str:
     context.setdefault("destination", "")
     context.setdefault("units", UNIT_DEFAULT)
     context.setdefault("profile", PROFILE_DEFAULT)
+    context.setdefault("gas_price", f"{formatting.DEFAULT_GAS_PRICE_PHP:.2f}")
     context.setdefault("has_key", True)
     context.setdefault("setup_lines", [])
     context.setdefault("error", None)
@@ -73,10 +74,12 @@ def create_app() -> Flask:
             units = UNIT_DEFAULT
         if profile not in services.PROFILE_CHOICES:
             profile = PROFILE_DEFAULT
+        gas_price = formatting.parse_gas_price(request.form.get("gas_price"))
 
         # Re-fill the form with what the user typed.
         context = {"origin": origin, "destination": destination,
-                   "units": units, "profile": profile}
+                   "units": units, "profile": profile,
+                   "gas_price": f"{gas_price:.2f}"}
 
         error = services.validate_inputs(origin, destination)
         if error is not None:
@@ -88,7 +91,8 @@ def create_app() -> Flask:
                          setup_lines=config.SETUP_MESSAGE.splitlines())
 
         result = services.get_route(key, origin.strip(),
-                                    destination.strip(), units, profile)
+                                    destination.strip(), units, profile,
+                                    gas_price)
         if not result.get("ok"):
             return _page(**context, error=result.get("title", "Error"),
                          error_detail=result.get("detail", ""))
