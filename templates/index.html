@@ -302,6 +302,25 @@
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
         </button>
+        {% if result %}
+        <button class="map-control-btn map-control-btn--directions"
+                type="button"
+                id="directionsToggleBtn"
+                aria-controls="directionsPanel"
+                aria-expanded="false"
+                aria-label="Show turn-by-turn directions"
+                title="Turn-by-turn directions">
+          <svg class="map-control-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="9" y1="6" x2="20" y2="6"></line>
+            <line x1="9" y1="12" x2="20" y2="12"></line>
+            <line x1="9" y1="18" x2="20" y2="18"></line>
+            <circle cx="4.5" cy="6" r="1.2"></circle>
+            <circle cx="4.5" cy="12" r="1.2"></circle>
+            <circle cx="4.5" cy="18" r="1.2"></circle>
+          </svg>
+          {% if result.steps %}<span class="map-control-btn__badge" aria-hidden="true">{{ result.steps | length }}</span>{% endif %}
+        </button>
+        {% endif %}
         <button class="map-control-btn map-control-btn--fullscreen" 
                 id="fullscreenBtn"
                 aria-label="Toggle fullscreen"
@@ -312,6 +331,63 @@
           </svg>
         </button>
       </div>
+{% if result %}
+<section class="directions-section directions-overlay" id="directionsPanel" aria-labelledby="directions-title" hidden>
+        <div class="directions-overlay__header">
+        <h3 class="directions-section__title" id="directions-title">
+          <svg class="icon icon--directions" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M21.71 11.29l-9-9a.996.996 0 0 0-1.41 0l-9 9a.996.996 0 0 0 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9a.996.996 0 0 0 0-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z"/>
+          </svg>
+          Turn-by-Turn Directions
+        </h3>
+          <button class="directions-overlay__close" type="button" id="directionsCloseBtn"
+                  aria-label="Hide directions" title="Hide directions">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="directions-overlay__body">
+        
+        {% if result.steps %}
+        <ol class="directions-list">
+          {% for step in result.steps %}
+          <li class="direction-step" data-step="{{ step.number }}">
+            <div class="direction-step__marker">
+              <span class="direction-step__number">{{ step.number }}</span>
+              <div class="direction-step__timeline" aria-hidden="true"></div>
+            </div>
+            <div class="direction-step__content">
+              <div class="direction-step__instruction">
+                <svg class="direction-step__icon icon icon--maneuver" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24">
+                  {% if 'left' in step.text.lower() %}
+                  <path fill="currentColor" d="M14 7l-5 5 5 5V7z"/>
+                  {% elif 'right' in step.text.lower() %}
+                  <path fill="currentColor" d="M10 17l5-5-5-5v10z"/>
+                  {% elif 'u-turn' in step.text.lower() or 'u turn' in step.text.lower() %}
+                  <path fill="currentColor" d="M9 9v6c0 1.65 1.35 3 3 3s3-1.35 3-3V9h2v6c0 2.76-2.24 5-5 5s-5-2.24-5-5V9H9z"/>
+                  {% elif 'arrive' in step.text.lower() or 'destination' in step.text.lower() %}
+                  <path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  {% else %}
+                  <path fill="currentColor" d="M7 10l5 5 5-5H7z"/>
+                  {% endif %}
+                </svg>
+                <span class="direction-step__text">{{ step.text }}</span>
+              </div>
+              <span class="direction-step__distance">{{ step.distance }}</span>
+            </div>
+          </li>
+          {% endfor %}
+        </ol>
+        {% else %}
+        <div class="directions-empty-state">
+          <svg class="directions-empty-state__icon" aria-hidden="true" width="48" height="48" viewBox="0 0 24 24">
+            <path fill="currentColor" opacity="0.3" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+          </svg>
+          <p class="directions-empty-state__message">No turn-by-turn instructions were returned for this route.</p>
+        </div>
+        {% endif %}
+        </div>
+      </section>
+{% endif %}
 <div class="map-loading-overlay" id="mapLoadingOverlay" hidden>
         <div class="map-loading-content">
           <div class="map-loading-spinner" aria-hidden="true">
@@ -432,53 +508,7 @@
         </div>
         </div>
       </section>
-<section class="directions-section" aria-labelledby="directions-title">
-        <h3 class="directions-section__title" id="directions-title">
-          <svg class="icon icon--directions" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M21.71 11.29l-9-9a.996.996 0 0 0-1.41 0l-9 9a.996.996 0 0 0 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9a.996.996 0 0 0 0-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z"/>
-          </svg>
-          Turn-by-Turn Directions
-        </h3>
-        
-        {% if result.steps %}
-        <ol class="directions-list">
-          {% for step in result.steps %}
-          <li class="direction-step" data-step="{{ step.number }}">
-            <div class="direction-step__marker">
-              <span class="direction-step__number">{{ step.number }}</span>
-              <div class="direction-step__timeline" aria-hidden="true"></div>
-            </div>
-            <div class="direction-step__content">
-              <div class="direction-step__instruction">
-                <svg class="direction-step__icon icon icon--maneuver" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24">
-                  {% if 'left' in step.text.lower() %}
-                  <path fill="currentColor" d="M14 7l-5 5 5 5V7z"/>
-                  {% elif 'right' in step.text.lower() %}
-                  <path fill="currentColor" d="M10 17l5-5-5-5v10z"/>
-                  {% elif 'u-turn' in step.text.lower() or 'u turn' in step.text.lower() %}
-                  <path fill="currentColor" d="M9 9v6c0 1.65 1.35 3 3 3s3-1.35 3-3V9h2v6c0 2.76-2.24 5-5 5s-5-2.24-5-5V9H9z"/>
-                  {% elif 'arrive' in step.text.lower() or 'destination' in step.text.lower() %}
-                  <path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                  {% else %}
-                  <path fill="currentColor" d="M7 10l5 5 5-5H7z"/>
-                  {% endif %}
-                </svg>
-                <span class="direction-step__text">{{ step.text }}</span>
-              </div>
-              <span class="direction-step__distance">{{ step.distance }}</span>
-            </div>
-          </li>
-          {% endfor %}
-        </ol>
-        {% else %}
-        <div class="directions-empty-state">
-          <svg class="directions-empty-state__icon" aria-hidden="true" width="48" height="48" viewBox="0 0 24 24">
-            <path fill="currentColor" opacity="0.3" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-          </svg>
-          <p class="directions-empty-state__message">No turn-by-turn instructions were returned for this route.</p>
-        </div>
-        {% endif %}
-      </section>
+
     </aside>
     {% else %}
 <aside class="results-panel results-panel--empty" id="resultsPanel" role="complementary" aria-label="Route results">

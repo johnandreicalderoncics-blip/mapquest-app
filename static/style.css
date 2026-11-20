@@ -3874,3 +3874,153 @@ h1, h2, h3, .trip-summary-card__title {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+
+/* ==========================================================================
+   Turn-by-turn directions as a toggleable panel over the map
+   Opened by #directionsToggleBtn in the map controls; sits just left of
+   those buttons so it never covers them, and scrolls on its own.
+   ========================================================================== */
+.directions-overlay {
+  position: absolute;
+  top: var(--space-4);
+  right: calc(var(--map-controls-right, var(--space-4)) + 64px);
+  z-index: 11;
+  width: min(360px, calc(100vw - 2 * var(--space-4)));
+  max-height: calc(100% - 2 * var(--space-4));
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border-radius: var(--radius-xl);
+  background: var(--surface-panel);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight), 0 18px 40px rgba(60, 36, 14, 0.22);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  animation: directionsPanelIn 220ms var(--motion-ease) both;
+  animation-play-state: running;
+}
+
+.directions-overlay[hidden] {
+  display: none !important;
+}
+
+@keyframes directionsPanelIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.directions-overlay__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.directions-overlay .directions-section__title {
+  margin: 0;
+}
+
+.directions-overlay__close {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-highlight);
+}
+
+.directions-overlay__close:hover {
+  color: var(--color-text-primary);
+}
+
+.directions-overlay__close:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.directions-overlay__body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-2) var(--space-4) var(--space-4);
+}
+
+/* Toggle button: pressed state + step count badge */
+.map-control-btn--directions {
+  position: relative;
+}
+
+.map-control-btn--active {
+  color: var(--color-text-inverse);
+  background: linear-gradient(145deg, var(--color-primary-light), var(--color-primary));
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="dark"] .map-control-btn--active {
+  color: #ffffff;
+}
+
+.map-control-btn__badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  line-height: 20px;
+  text-align: center;
+  color: #ffffff;
+  background: var(--color-primary-dark);
+  box-shadow: 0 2px 6px rgba(60, 36, 14, 0.3);
+}
+
+/* Phones: a bottom sheet across the map instead of a side card */
+@media (max-width: 767px) {
+  .directions-overlay {
+    top: auto;
+    left: var(--space-2);
+    right: var(--space-2);
+    bottom: var(--space-2);
+    width: auto;
+    max-height: 55%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .directions-overlay {
+    animation: none;
+  }
+}
+
+/* Phones: the results card covers the top ~60% of the screen and stacks
+   above the whole map, so the action buttons and the directions sheet
+   live in the visible strip of map underneath it. */
+@media (max-width: 767px) {
+  /* The results card spans the full width here, so the desktop rule that
+     shifts buttons left of it would push them off-screen. */
+  .map-controls {
+    right: var(--space-4);
+  }
+
+  .map-controls--actions {
+    top: auto;
+    bottom: var(--space-4);
+  }
+
+  .directions-overlay {
+    top: auto;
+    left: var(--space-2);
+    right: calc(var(--space-4) + 56px);
+    bottom: var(--space-2);
+    max-height: 36vh;
+  }
+}
