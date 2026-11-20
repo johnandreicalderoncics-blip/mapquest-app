@@ -1329,3 +1329,19 @@
     init();
   }
 })();
+
+
+// Show the gas price field for car trips and the weight field for walk/bike.
+(function profileFieldsController() {
+  function sync() {
+    const checked = document.querySelector('input[name="profile"]:checked');
+    if (!checked) return;
+    document.querySelectorAll("[data-profiles]").forEach((field) => {
+      field.hidden = !field.dataset.profiles.split(" ").includes(checked.value);
+    });
+  }
+  document.querySelectorAll('input[name="profile"]').forEach((radio) => {
+    radio.addEventListener("change", sync);
+  });
+  sync();
+})();
